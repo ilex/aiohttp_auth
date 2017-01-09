@@ -94,3 +94,13 @@ async def forget(request):
 
     return await auth_policy.forget(request)
 
+
+def setup(app, policy):
+    """Setup middleware in aiohttp fashion.
+
+    Args:
+        app: aiohttp Application object.
+        policy: An authentication policy with a base class of
+            AbstractAuthentication.
+    """
+    app.middlewares.append(auth_middleware(policy))
