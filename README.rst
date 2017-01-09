@@ -25,7 +25,9 @@ retrieving the authentication details for a user across http requests.
 Typically, an application would retrieve the login details for a user, and call
 the remember function to store the details. These details can then be recalled
 in future requests. A simplistic example of users stored in a python dict would
-be::
+be:
+
+.. code-block:: python
 
     from aiohttp_auth import auth
     from aiohttp import web
@@ -48,7 +50,9 @@ be::
         raise web.HTTPForbidden()
 
 User data can be verified in later requests by checking that their username is
-valid explicity, or by using the auth_required decorator::
+valid explicity, or by using the auth_required decorator:
+
+.. code-block:: python
 
     async def check_explicitly_view(request):
         user = await get_auth(request)
@@ -64,7 +68,9 @@ valid explicity, or by using the auth_required decorator::
         return web.Response(body='OK'.encode('utf-8'))
 
 To end the session, the user data can be forgotten by using the forget
-function::
+function:
+
+.. code-block:: python
 
     @auth.auth_required
     async def logout_view(request):
@@ -84,18 +90,22 @@ value known only to the server. The cookie contains the maximum age allowed
 before the ticket expires, and can also use the IP address (v4 or v6) of the
 user to link the cookie to that address. The cookies data is not encryptedd,
 but only holds the username of the user and the cookies expiration time, along
-with its security hash::
+with its security hash:
+
+.. code-block:: python
 
     def init(loop):
+        app = web.Application(loop=loop)
+
         # Create a auth ticket mechanism that expires after 1 minute (60
         # seconds), and has a randomly generated secret. Also includes the
         # optional inclusion of the users IP address in the hash
         policy = auth.CookieTktAuthentication(urandom(32), 60,
-                                              include_ip=True))
+                                              include_ip=True)
+        
+        # setup middleware in aiohttp fashion
+        auth.setup(app, policy)
 
-        app = web.Application(loop=loop,
-                              middlewares=[auth.auth_middleware(policy)])
-        app = web.Application()
         app.router.add_route('POST', '/login', login_view)
         app.router.add_route('GET', '/logout', logout_view)
         app.router.add_route('GET', '/test0', check_explicitly_view)
@@ -106,25 +116,44 @@ with its security hash::
 The SessionTktAuthentication policy provides many of the same features, but
 stores the same ticket credentials in a aiohttp_session object, allowing
 different storage mechanisms such as Redis storage, and
-EncryptedCookieStorage::
+EncryptedCookieStorage:
+
+.. code-block:: python
 
     from aiohttp_session import get_session, session_middleware
     from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
     def init(loop):
+        app = web.Application(loop=loop)
+
+        # setup session middleware in aiohttp fashion
+        storage = EncryptedCookieStorage(urandom(32))
+        aiohttp_session.setup(app, storage)
 
         # Create a auth ticket mechanism that expires after 1 minute (60
         # seconds), and has a randomly generated secret. Also includes the
         # optional inclusion of the users IP address in the hash
         policy = auth.SessionTktAuthentication(urandom(32), 60,
-                                               include_ip=True))
+                                               include_ip=True)
 
-        middlewares = [session_middleware(EncryptedCookieStorage(urandom(32))),
-                       auth.auth_middleware(policy)]
-
-        app = web.Application(loop=loop, middlewares=middlewares)
+        # setup aiohttp_auth.auth middleware in aiohttp fashion
+        auth.setup(app, policy)
 
         ...
+
+
+In order to test this middleware with pytest you need to install::
+
+    $ pip install pytest pytest-aiohttp pytest-cov
+
+And then run tests::
+
+    $ py.test -v --cov-report=term-missing --cov=aiohttp_auth pytests
+
+There are two tests that use `sleep` function which marked as `slow` tests. 
+To avoid running them use::
+
+    $ py.test -v -m 'not slow' --cov-report=term-missing --cov=aiohttp_auth pytests
 
 
 acl_middleware Usage
@@ -146,7 +175,9 @@ auth.get_auth function) as a parameter, and expects a sequence of permitted ACL
 groups to be returned. This can be a empty tuple to represent no explicit
 permissions, or None to explicitly forbid this particular user_id. Note that
 the user_id passed may be None if no authenticated user exists. Building apon
-our example, a function may be defined as::
+our example, a function may be defined as:
+
+.. code-block:: python
 
     from aiohttp_auth import acl
 
@@ -178,7 +209,9 @@ is not None.
 With the groups defined, a ACL context can be specified for looking up what
 permissions each group is allowed to access. A context is a sequence of ACL
 tuples which consist of a Allow/Deny action, a group, and a sequence of
-permissions for that ACL group. For example::
+permissions for that ACL group. For example:
+
+.. code-block:: python
 
     from aiohttp_auth.permissions import Group, Permission
 
@@ -189,7 +222,9 @@ permissions for that ACL group. For example::
 Views can then be defined using the acl_required decorator, allowing only
 specific users access to a particular view. The acl_required decorator
 specifies a permission required to access the view, and a context to check
-against::
+against:
+
+.. code-block:: python
 
     @acl_required('view', context)
     async def view_view(request):
@@ -211,7 +246,9 @@ ACL permission requested by the view, the decorator raises HTTPForbidden.
 ACL tuple sequences are checked in order, with the first tuple that matches the
 group the user is a member of, AND includes the permission passed to the
 function, declared to be the matching ACL group. This means that if the ACL
-context was modified to::
+context was modified to:
+
+.. code-block:: python
 
     context = [(Permission.Allow, Group.Everyone, ('view',)),
                (Permission.Deny, 'super_user', ('view_extra')),
