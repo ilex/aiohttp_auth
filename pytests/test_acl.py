@@ -74,7 +74,7 @@ async def test_correct_groups_returned_for_authenticated_user(app, client):
 
         assert 'group0' in groups
         assert 'group1' in groups
-        assert 'some_user' in groups
+        assert 'some_user' not in groups
         assert Group.Everyone in groups
         assert Group.AuthenticatedUser in groups
 

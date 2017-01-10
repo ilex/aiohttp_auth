@@ -63,7 +63,7 @@ async def get_user_groups(request):
     if groups is None:
         return None
 
-    user_groups = (Group.AuthenticatedUser, user_id) if user_id is not None else ()
+    user_groups = (Group.AuthenticatedUser, ) if user_id is not None else ()
 
     return set(itertools.chain(groups, (Group.Everyone,), user_groups))
 
