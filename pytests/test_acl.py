@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 import aiohttp_session
 from aiohttp import web
@@ -170,3 +171,39 @@ async def test_permission_order(app, client):
     await assert_response(cli.get('/test1'), 'test1')
     await assert_response(cli.get('/remember'), 'remember')
     await assert_response(cli.get('/test0'), 'test0')
+
+
+async def test_acl_required_decorator(loop, app, client):
+    context = [(Permission.Deny, 'group0', ('test0',)),
+               (Permission.Allow, 'group0', ('test1',)),
+               (Permission.Allow, 'group1', ('test0', 'test1'))]
+
+    class GroupsCallback:
+        def __init__(self, group=None):
+            self.group = group
+
+        def __call__(self, user_id):
+            future = asyncio.Future(loop=loop)
+            future.set_result((self.group, ))
+            return future
+
+    @acl.acl_required('test0', context)
+    async def handler_test(request):
+        return web.Response(text='test')
+
+    groups_callback = GroupsCallback()
+    acl.setup(app, groups_callback)
+    app.router.add_get('/test', handler_test)
+
+    cli = await client(app)
+
+    response = await cli.get('/test')
+    assert response.status == 403
+
+    groups_callback.group = 'group0'
+    response = await cli.get('/test')
+    assert response.status == 403
+
+    groups_callback.group = 'group1'
+    response = await cli.get('/test')
+    await assert_response(cli.get('/test'), 'test')
