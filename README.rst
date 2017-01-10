@@ -142,19 +142,6 @@ EncryptedCookieStorage:
         ...
 
 
-In order to test this middleware with pytest you need to install::
-
-    $ pip install pytest pytest-aiohttp pytest-cov
-
-And then run tests::
-
-    $ py.test -v --cov-report=term-missing --cov=aiohttp_auth pytests
-
-There are two tests that use `sleep` function which marked as `slow` tests. 
-To avoid running them use::
-
-    $ py.test -v -m 'not slow' --cov-report=term-missing --cov=aiohttp_auth pytests
-
 
 acl_middleware Usage
 ---------------------
@@ -179,7 +166,9 @@ our example, a function may be defined as:
 
 .. code-block:: python
 
-    from aiohttp_auth import acl
+    from aiohttp import web
+    from aiohttp_auth import acl, auth
+    import aiohttp_session
 
     group_map = {'user': (,),
                  'super_user': ('edit_group',),}
@@ -193,11 +182,18 @@ our example, a function may be defined as:
     def init(loop):
         ...
 
-        middlewares = [session_middleware(EncryptedCookieStorage(urandom(32))),
-                       auth.auth_middleware(policy),
-                       acl.acl_middleware(acl_group_callback)]
+        app = web.Application(loop=loop)
+        # setup session middleware
+        storage = aiohttp_session.EncryptedCookieStorage(urandom(32))
+        aiohttp_session.setup(app, storage)
 
-        app = web.Application(loop=loop, middlewares=middlewares)
+        # setup aiohttp_auth.auth middleware
+        policy = auth.SessionTktAuthentication(urandom(32), 60, include_ip=True)
+        auth.setup(app, policy)
+
+        # setup aiohttp_auth.acl middleware
+        acl.setup(app, acl_group_callback)
+
         ...
 
 
@@ -257,6 +253,24 @@ context was modified to:
 
 In this example the 'super_user' would be denied access to the view_extra_view
 even though they are an AuthenticatedUser and in the edit_group.
+
+
+Testing with Pytest
+-------------------
+
+In order to test this middleware with pytest you need to install::
+
+    $ pip install pytest pytest-aiohttp pytest-cov
+
+And then run tests::
+
+    $ py.test -v --cov-report=term-missing --cov=aiohttp_auth pytests
+
+There are two tests that use `sleep` function which marked as `slow` tests. 
+To avoid running them use::
+
+    $ py.test -v -m 'not slow' --cov-report=term-missing --cov=aiohttp_auth pytests
+
 
 License
 -------
