@@ -1,10 +1,12 @@
+"""ACL middleware decorators."""
+
 from functools import wraps
 from aiohttp import web
 from .acl import get_permitted
 
 
 def acl_required(permission, context):
-    """Returns a decorator that checks if a user has the requested permission
+    """Return a decorator that checks if a user has the requested permission
     from the passed acl context.
 
     This function constructs a decorator that can be used to check a aiohttp's
@@ -24,17 +26,15 @@ def acl_required(permission, context):
         the given context. The decorator will raise HTTPForbidden if the user
         does not have the correct permissions to access the view.
     """
-
     def decorator(func):
 
         @wraps(func)
         async def wrapper(*args):
             request = args[-1]
 
-            if callable(context):
-                context = context()
+            context_value = context() if callable(context) else context
 
-            if await get_permitted(request, permission, context):
+            if await get_permitted(request, permission, context_value):
                 return await func(*args)
 
             raise web.HTTPForbidden()
@@ -42,4 +42,3 @@ def acl_required(permission, context):
         return wrapper
 
     return decorator
-
