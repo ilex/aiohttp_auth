@@ -1,5 +1,4 @@
 import itertools
-from aiohttp import web
 from ..auth import get_auth
 from ..permissions import Permission, Group
 
@@ -112,3 +111,18 @@ async def get_permitted(request, permission, context):
                 return action == Permission.Allow
 
     return False
+
+
+def setup(app, groups_callback):
+    """Setup middleware in aiohttp fashion.
+
+    Args:
+        app: aiohttp Application object.
+        groups_callback: This is a callable which takes a user_id (as returned
+            from the auth.get_auth function), and expects a sequence of
+            permitted ACL groups to be returned. This can be a empty tuple to
+            represent no explicit permissions, or None to explicitly forbid
+            this particular user_id. Note that the user_id passed may be None
+            if no authenticated user exists.
+    """
+    app.middlewares.append(acl_middleware(groups_callback))
