@@ -1,4 +1,3 @@
-import asyncio
 import pytest
 import aiohttp_session
 from aiohttp import web
@@ -182,10 +181,14 @@ async def test_acl_required_decorator(loop, app, client):
         def __init__(self, group=None):
             self.group = group
 
+        async def groups(self):
+            if self.group is None:
+                return None
+
+            return (self.group, )
+
         def __call__(self, user_id):
-            future = asyncio.Future(loop=loop)
-            future.set_result((self.group, ))
-            return future
+            return self.groups()
 
     @acl.acl_required('test0', context)
     async def handler_test(request):
@@ -206,4 +209,22 @@ async def test_acl_required_decorator(loop, app, client):
 
     groups_callback.group = 'group1'
     response = await cli.get('/test')
+    await assert_response(cli.get('/test'), 'test')
+
+
+async def test_acl_not_matching_acl_group(app, client):
+    async def handler_test(request):
+        context = [(Permission.Allow, 'group2', ('test0')),
+                   (Permission.Allow, 'group3', ('test0', 'test1'))]
+
+        assert (await acl.get_permitted(request, 'test0', context)) is False
+        assert (await acl.get_permitted(request, 'test1', context)) is False
+
+        return web.Response(text='test')
+
+    acl.setup(app, _groups_callback)
+    app.router.add_get('/test', handler_test)
+
+    cli = await client(app)
+
     await assert_response(cli.get('/test'), 'test')
