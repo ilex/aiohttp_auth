@@ -228,3 +228,31 @@ async def test_acl_not_matching_acl_group(app, client):
     cli = await client(app)
 
     await assert_response(cli.get('/test'), 'test')
+
+
+async def test_acl_permission_deny_for_user_id_equals_to_group_name(app,
+                                                                    client):
+    context = [(Permission.Allow, 'group0', ('test0',)),
+               (Permission.Deny, 'group1', ('test0',))]
+
+    async def _groups1_callback(user_id):
+        return ('group1', )
+
+    async def handler_test(request):
+        assert (await acl.get_permitted(request, 'test0', context)) is False
+
+        return web.Response(text='test')
+
+    async def handler_remember_group0(request):
+        await auth.remember(request, 'group0')
+        return web.Response(text='remember_group0')
+
+    acl.setup(app, _groups1_callback)
+    app.router.add_get('/test', handler_test)
+    app.router.add_get('/remember_group0', handler_remember_group0)
+
+    cli = await client(app)
+
+    await assert_response(cli.get('/test'), 'test')
+    await assert_response(cli.get('/remember_group0'), 'remember_group0')
+    await assert_response(cli.get('/test'), 'test')
