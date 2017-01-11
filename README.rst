@@ -202,6 +202,52 @@ acl_middleware to also include the Group.Everyone group (if the value returned
 is not None), and also the Group.AuthenticatedUser if the user_id
 is not None.
 
+Instead of acl_group_callback as a coroutine the AbstractACLGroupsCallback 
+class can be used (all you need is to override acl_groups method):
+
+.. code-block:: python
+
+    from aiohttp import web
+    from aiohttp_auth import acl, auth
+    from aiohttp_auth.acl.abc import AbstractACLGroupsCallback
+    import aiohttp_session
+
+
+    class ACLGroupsCallback(AbstractACLGroupsCallback):
+        def __init__(self, cache):
+            # Save here data you need to retrieve groups
+            # for example cache or db connection
+            self.cache = cache
+
+        async def acl_groups(self, user_id):
+            # override abstract method with needed logic
+            user = self.cache.get(user_id, None)
+            ...
+            groups = user.groups() if user else tuple()
+            return groups
+
+
+    def init(loop):
+        ...
+
+        app = web.Application(loop=loop)
+        # setup session middleware
+        storage = aiohttp_session.EncryptedCookieStorage(urandom(32))
+        aiohttp_session.setup(app, storage)
+
+        # setup aiohttp_auth.auth middleware
+        policy = auth.SessionTktAuthentication(urandom(32), 60, include_ip=True)
+        auth.setup(app, policy)
+
+        # setup aiohttp_auth.acl middleware
+        cache = ... 
+        acl_groups_callback = ACLGroupsCallback(cache)
+        acl.setup(app, acl_group_callback)
+
+        ...
+
+
+
 With the groups defined, a ACL context can be specified for looking up what
 permissions each group is allowed to access. A context is a sequence of ACL
 tuples which consist of a Allow/Deny action, a group, and a sequence of
