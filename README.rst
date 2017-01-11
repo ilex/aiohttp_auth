@@ -199,7 +199,7 @@ our example, a function may be defined as:
 
 Note that the ACL groups returned by the function will be modified by the
 acl_middleware to also include the Group.Everyone group (if the value returned
-is not None), and also the Group.AuthenticatedUser and user_id if the user_id
+is not None), and also the Group.AuthenticatedUser if the user_id
 is not None.
 
 With the groups defined, a ACL context can be specified for looking up what

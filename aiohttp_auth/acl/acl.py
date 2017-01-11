@@ -48,8 +48,8 @@ async def get_user_groups(request):
         If the ACL callback function returns None, this function returns None.
         Otherwise this function returns the sequence of group permissions
         provided by the callback, plus the Everyone group. If user_id is not
-        None, the AuthnticatedUser group and the user_id are added to the
-        groups returned by the function
+        None, the AuthnticatedUser group is added to the groups returned
+        by the function.
 
     Raises:
         RuntimeError: If the ACL middleware is not installed
