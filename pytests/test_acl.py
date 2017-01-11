@@ -2,6 +2,7 @@ import pytest
 import aiohttp_session
 from aiohttp import web
 from aiohttp_auth import acl, auth
+from aiohttp_auth.acl.abc import AbstractACLGroupsCallback
 from aiohttp_auth.permissions import Group, Permission
 from utils import assert_response
 
@@ -32,6 +33,12 @@ async def _groups_callback(user_id):
     return ('group0', 'group1')
 
 
+class ACLGroupsCallback(AbstractACLGroupsCallback):
+    """Groups callback callable class that always returns two groups."""
+    async def acl_groups(self, user_id):
+        return ('group0', 'group1')
+
+
 async def _auth_groups_callback(user_id):
     """Groups callback function that always returns two groups."""
     if user_id:
@@ -43,6 +50,12 @@ async def _auth_groups_callback(user_id):
 async def _none_groups_callback(user_id):
     """Groups callback function that always returns None."""
     return None
+
+
+class NoneACLGroupsCallback(AbstractACLGroupsCallback):
+    """Groups callback callable class that always returns None."""
+    async def acl_groups(self, user_id):
+        return None
 
 
 async def test_acl_middleware_setup(app):
@@ -255,4 +268,66 @@ async def test_acl_permission_deny_for_user_id_equals_to_group_name(app,
 
     await assert_response(cli.get('/test'), 'test')
     await assert_response(cli.get('/remember_group0'), 'remember_group0')
+    await assert_response(cli.get('/test'), 'test')
+
+
+async def test_correct_groups_returned_for_authenticated_user_with_abc(
+        app, client):
+    async def handler_test(request):
+        groups = await acl.get_user_groups(request)
+
+        assert 'group0' in groups
+        assert 'group1' in groups
+        assert 'some_user' not in groups
+        assert Group.Everyone in groups
+        assert Group.AuthenticatedUser in groups
+
+        return web.Response(text='test')
+
+    acl_groups_callback = ACLGroupsCallback()
+    acl.setup(app, acl_groups_callback)
+    app.router.add_get('/test', handler_test)
+
+    cli = await client(app)
+
+    await assert_response(cli.get('/remember'), 'remember')
+
+    await assert_response(cli.get('/test'), 'test')
+
+
+async def test_correct_groups_returned_for_unauthenticated_user_with_abc(
+        app, client):
+    async def handler_test(request):
+        groups = await acl.get_user_groups(request)
+
+        assert 'group0' in groups
+        assert 'group1' in groups
+        assert 'some_user' not in groups
+        assert Group.Everyone in groups
+        assert Group.AuthenticatedUser not in groups
+
+        return web.Response(text='test')
+
+    acl_groups_callback = ACLGroupsCallback()
+    acl.setup(app, acl_groups_callback)
+    app.router.add_get('/test', handler_test)
+
+    cli = await client(app)
+
+    await assert_response(cli.get('/test'), 'test')
+
+
+async def test_no_groups_if_none_returned_from_callback_with_abc(app, client):
+    async def handler_test(request):
+        groups = await acl.get_user_groups(request)
+        assert groups is None
+
+        return web.Response(text='test')
+
+    acl_groups_callback = NoneACLGroupsCallback()
+    acl.setup(app, acl_groups_callback)
+    app.router.add_get('/test', handler_test)
+
+    cli = await client(app)
+
     await assert_response(cli.get('/test'), 'test')
