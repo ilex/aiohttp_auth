@@ -60,6 +60,22 @@ async def get_user_groups(request):
 
     user_id = await get_auth(request)
     groups = await acl_callback(user_id)
+
+    return extend_user_groups(user_id, groups)
+
+
+def extend_user_groups(user_id, groups):
+    """Extend user groups with specific Groups.
+
+    Args:
+        user_id: User identity from get_auth.
+        groups: User groups.
+    Returns:
+        If groups is None, this function returns None.
+        Otherwise this function extends groups with the Everyone group.
+        If user_id is not None, the AuthnticatedUser group is added to the
+        groups returned by the function.
+    """
     if groups is None:
         return None
 
@@ -102,6 +118,21 @@ async def get_permitted(request, permission, context):
     """
 
     groups = await get_user_groups(request)
+    return get_groups_permitted(groups, permission, context)
+
+
+def get_groups_permitted(groups, permission, context):
+    """Check if one of the groups has the requested permission.
+
+    Args:
+        groups: A set of ACL groups.
+        permission: The specific permission requested.
+        context: A sequence of ACL tuples.
+
+    Returns:
+        True if the groups are Allowed the requested permission, false
+        otherwise.
+    """
     if groups is None:
         return False
 
