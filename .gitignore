@@ -1,2 +1,7 @@
 __pycache__
 dist
+.cache
+.coverage
+.tox
+*.egg
+*.egg-info
