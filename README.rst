@@ -8,13 +8,17 @@ These plugins are designed to be lightweight, simple, and extensible, allowing
 the library to be reused regardless of the backend authentication mechanism.
 This provides a familiar framework across projects.
 
-There are two middleware plugins provided by the library. The auth_middleware
+There are three middleware plugins provided by the library. The auth_middleware
 plugin provides a simple system for authenticating a users credentials, and
 ensuring that the user is who they say they are.
 
 The acl_middleware plugin provides a simple access control list authorization
 mechanism, where users are provided access to different view handlers depending
 on what groups the user is a member of.
+
+The autz_middleware plugin provides a generic way of authorization using 
+different authorization policies. There is the ACL authorization policy as a
+part of the plugin.
 
 
 auth_middleware Usage
@@ -144,7 +148,7 @@ EncryptedCookieStorage:
 
 
 acl_middleware Usage
----------------------
+--------------------
 
 The acl_middleware plugin (provided by the aiohttp_auth library), is layered
 on top of the auth_middleware plugin, and provides a access control list (ACL)
@@ -247,7 +251,6 @@ class can be used (all you need is to override acl_groups method):
         ...
 
 
-
 With the groups defined, a ACL context can be specified for looking up what
 permissions each group is allowed to access. A context is a sequence of ACL
 tuples which consist of a Allow/Deny action, a group, and a sequence of
@@ -301,6 +304,232 @@ In this example the 'super_user' would be denied access to the view_extra_view
 even though they are an AuthenticatedUser and in the edit_group.
 
 
+autz_middleware Usage
+---------------------
+
+The autz middleware provides follow interface to use in applications:
+
+    - Using `autz.permit` coroutine.
+    - Using `autz.autz_required` decorator for aiohttp handlers.
+
+The `async def autz.permit(request, permission, context=None)` coroutine checks 
+if permission is allowed for a given request with a given context. 
+The authorization checking is provided by authorization policy which is set by 
+setup function. The nature of permission and context is also determined by a policy.
+
+The `def autz_required(permission, context=None)` decorator for aiohttp's request 
+handlers checks if current user has requested permission with a given contex.
+If the user does not have the correct permission it raises `HTTPForbidden`.
+
+Note that context can be optional if authorization policy provides a way
+to specify global application context or if it does not require any. Also context 
+parameter can be used to override global context if it is provided by authorization policy.
+
+To use an authorization policy with autz middleware a class of policy should be created
+inherited from `autz.abc.AbstractAutzPolicy`. The only thing that should be implemented
+is `permit` method (see `Create custom authorization policy to use with autz middleware`_). 
+The autz middleware has a built in ACL authorization policy 
+(see `Use ACL authorization policy with autz middleware`_).
+
+The recomended way to initialize this middleware is through
+`aiohttp_auth.autz.setup` or `aiohttp_auth.setup` functions. As the autz
+middleware can be used only with authentication `aiohttp_auth.auth`
+middleware it is preferred to use `aiohttp_auth.setup`.
+
+Use ACL authorization policy with autz middleware
+-------------------------------------------------
+
+The autz plugin has a built in ACL authorization policy in `autz.policy.acl` module.
+This module introduces a set of class:
+
+    AbsractACLAutzPolicy: 
+        Abstract base class to create acl authorization
+        policy class. The subclass should define how to retrieve users
+        groups.
+
+    AbstractACLContext: 
+        Abstract base class for ACL context containers.
+        Context container defines a representation of ACL data structure,
+        a storage method and how to process ACL context and groups
+        to authorize user with permissions.
+
+    NaiveACLContext: 
+        ACL context container which is initialized with list
+        of ACL tuples and stores them as they are. The implementation
+        of permit process is the same as used by acl_middleware.
+
+    ACLContext: 
+        The same as NaiveACLContext but makes some transformation
+        of incoming ACL tuples. This may helps with a perfomance of the permit
+        process.
+
+As the library does not know how to get groups for user and it is always
+up to application, it provides abstract authorization acl policy
+class. Subclass should implement `acl_groups` method to use it with
+autz_middleware.
+
+Note that an acl context can be specified globally while initializing
+policy or locally through autz.permit function's parameter. A local
+context will always override a global one while checking permissions.
+If there is no local context and global context is not set then a permit
+method will raise a RuntimeError.
+
+A context is an instance of `AbstractACLContext` subclass or a sequence of
+ACL tuples which consist of a Allow/Deny action, a group, and a sequence
+of permissions for that ACL group (see `acl_middleware Usage`).
+
+Note that custom implementation of AbstractACLContext can be used to
+change the context form and the way it is processed.
+
+Usage example:
+
+.. code-block:: python
+    
+    from aiohttp import web
+    from aiohttp_auth import autz, Permission
+    from aiohttp_auth.autz import autz_required
+    from aiohttp_auth.autz.policy import acl
+
+
+    # create an acl authorization policy class
+    class ACLAutzPolicy(acl.AbsractACLAutzPolicy):
+        """The concrete ACL authorization policy."""
+
+        def __init__(self, users, context=None):
+            # do not forget to call parent __init__
+            super().__init__(context)
+
+            # we will retrieve groups using some kind of users dict
+            # here you can use db or cache or any other needed data
+            self.users = users
+
+        async def acl_groups(self, user_identity):
+            """Return acl groups for given user identity.
+
+            This method should return a set of groups for given user_identity.
+
+            Args:
+                user_identity: User identity returned by auth.get_auth.
+
+            Returns:
+                Set of acl groups for the user identity.
+            """
+            # implement application specific logic here
+            user = self.users.get(user_identity, None)
+            if user is None:
+                return None
+
+            return user['groups']
+
+
+    def init(loop):
+        app = web.Application(loop=loop)
+        ...
+        # here you need to initialize aiohttp_auth.auth middleware
+        auth_policy = ...
+        ...
+        users = ...
+        # Create application global context.
+        # It can be overridden in autz.permit fucntion or in
+        # autz_required decorator using local context explicitly.
+        context = [(Permission.Allow, 'view_group', {'view', }),
+                   (Permission.Allow, 'edit_group', {'view', 'edit'})]
+        # this raw context will be wrapped by ACLContext container internally
+        # you can explicitly create acl context class you need and pass it here
+        autz_policy = ACLAutzPolicy(users, context)
+
+        # install auth and autz middleware in aiohttp fashion
+        aiohttp_auth.setup(app, auth_policy, autz_policy)
+
+
+    # authorization using autz decorator applying to app handler
+    @autz_required('view')
+    async def handler_view(request):
+        # authorization using permit
+        if await autz.permit(request, 'edit'):
+            pass
+
+
+    # raw local context will wrapped with NaiveACLContext container internally
+    local_context = [(Permission.Deny, 'view_group', {'view', })]
+
+    # authorization using autz decorator applying to app handler
+    # using local_context to override global one.
+    @autz_required('view', local_context)
+    async def handler_view_local(request):
+        # authorization using permit and local_context to 
+        # override global one
+        if await autz.permit(request, 'edit', local_context):
+            pass
+
+Create custom authorization policy to use with autz middleware
+--------------------------------------------------------------
+
+Tha autz middleware makes it possible to use custom athorization policy with
+the same autz public interface for checking user permissions.
+The follow example shows how to create such simple custom policy:
+
+.. code-block:: python
+
+    from aiohttp import web
+    from aiohttp_auth import autz, auth
+    from aiohttp_auth.autz import autz_required
+    from aiohttp_auth.autz.abc import AbstractAutzPolicy
+
+    class CustomAutzPolicy(AbstractAutzPolicy):
+
+        def __init__(self, admin_user_identity):
+            self.admin_user_identity = admin_user_identity
+
+        async def permit(self, user_identity, permission, context=None):
+            # All we need is to implement this method
+
+            if permission == 'admin':
+                # only admin_user_identity is allowed for 'admin' permission
+                if user_identity == self.admin_user_identity:
+                    return True
+
+                # forbid anyone else
+                return False
+            
+            # allow any other permissions for all users
+            return True
+
+
+    def init(loop):
+        app = web.Application(loop=loop)
+        ...
+        # here you need to initialize aiohttp_auth.auth middleware
+        auth_policy = ...
+        ...
+        # create custom authorization policy 
+        autz_policy = CustomAutzPolicy(admin_user_identity='Bob') 
+
+        # install auth and autz middleware in aiohttp fashion
+        aiohttp_auth.setup(app, auth_policy, autz_policy)
+
+
+    # authorization using autz decorator applying to app handler
+    @autz_required('admin')
+    async def handler_admin(request):
+        # only Bob can run this handler
+
+        # authorization using permit
+        if await autz.permit(request, 'admin'):
+            # only Bob can get here
+            pass
+
+
+    @autz_required('guest')
+    async def handler_guest(request):
+        # everyone can run this handler
+
+        # authorization using permit
+        if await autz.permit(request, 'guest'):
+            # everyone can get here
+            pass
+
+
 Testing with Pytest
 -------------------
 
@@ -310,12 +539,7 @@ In order to test this middleware with pytest you need to install::
 
 And then run tests::
 
-    $ py.test -v --cov-report=term-missing --cov=aiohttp_auth pytests
-
-There are two tests that use `sleep` function which marked as `slow` tests. 
-To avoid running them use::
-
-    $ py.test -v -m 'not slow' --cov-report=term-missing --cov=aiohttp_auth pytests
+    $ py.test -v --cov-report=term-missing --cov=aiohttp_auth --cov=pytests pytests
 
 
 License
