@@ -1,7 +1,7 @@
 """ACL authorization policy.
 
 This module introduces:
-    AbsractACLAutzPolicy: Abstract base class to create acl authorization
+    AbstractACLAutzPolicy: Abstract base class to create acl authorization
         policy class. The subclass should define how to retrieve users
         groups.
     AbstractACLContext: Abstract base class for ACL context containers.
@@ -109,7 +109,7 @@ class ACLContext(NaiveACLContext):
                                for action, group, permissions in context))
 
 
-class AbsractACLAutzPolicy(AbstractAutzPolicy):
+class AbstractACLAutzPolicy(AbstractAutzPolicy):
     """Abstract base class for ACL authorization policy.
 
     As the library does not know how to get groups for user and it is always
@@ -150,7 +150,7 @@ class AbsractACLAutzPolicy(AbstractAutzPolicy):
         from aiohttp_auth.autz.policy import acl
 
 
-        class ACLAutzPolicy(acl.AbsractACLAutzPolicy):
+        class ACLAutzPolicy(acl.AbstractACLAutzPolicy):
             def __init__(self, users, context=None):
                 super().__init__(context)
 

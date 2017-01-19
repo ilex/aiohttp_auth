@@ -15,7 +15,7 @@ async def test_aiohttp_auth_middleware_setup(loop):
     auth_policy = auth.SessionTktAuthentication(secret, 15,
                                                 cookie_name='auth')
 
-    class ACLAutzPolicy(acl.AbsractACLAutzPolicy):
+    class ACLAutzPolicy(acl.AbstractACLAutzPolicy):
         async def acl_groups(self, user_identity):
             return None  # pragma: no cover
 

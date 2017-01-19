@@ -29,13 +29,13 @@ def app(loop):
     yield application
 
 
-class ACLAutzPolicy(acl.AbsractACLAutzPolicy):
+class ACLAutzPolicy(acl.AbstractACLAutzPolicy):
     """Policy that always returns the same two groups."""
     async def acl_groups(self, user_identity):
         return ('group0', 'group1')
 
 
-class AuthACLAutzPolicy(acl.AbsractACLAutzPolicy):
+class AuthACLAutzPolicy(acl.AbstractACLAutzPolicy):
     """Policy that always returns the same two groups."""
     async def acl_groups(self, user_identity):
         if user_identity:
@@ -44,7 +44,7 @@ class AuthACLAutzPolicy(acl.AbsractACLAutzPolicy):
         return ()
 
 
-class NoneACLAutzPolicy(acl.AbsractACLAutzPolicy):
+class NoneACLAutzPolicy(acl.AbstractACLAutzPolicy):
     """Policy that always returns None."""
     async def acl_groups(self, user_id):
         return None
@@ -230,7 +230,7 @@ async def test_autz_required_decorator_with_acl_policy(loop, app, client):
                (Permission.Allow, 'group0', ('test1',)),
                (Permission.Allow, 'group1', ('test0', 'test1'))]
 
-    class CustomACLAutzPolicy(acl.AbsractACLAutzPolicy):
+    class CustomACLAutzPolicy(acl.AbstractACLAutzPolicy):
         def __init__(self, group=None, context=None):
             super().__init__(context)
             self.group = group

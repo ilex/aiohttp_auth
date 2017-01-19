@@ -342,7 +342,7 @@ Use ACL authorization policy with autz middleware
 The autz plugin has a built in ACL authorization policy in ``autz.policy.acl`` module.
 This module introduces a set of class:
 
-    AbsractACLAutzPolicy: 
+    AbstractACLAutzPolicy: 
         Abstract base class to create acl authorization
         policy class. The subclass should define how to retrieve users
         groups.
@@ -392,7 +392,7 @@ Usage example:
 
 
     # create an acl authorization policy class
-    class ACLAutzPolicy(acl.AbsractACLAutzPolicy):
+    class ACLAutzPolicy(acl.AbstractACLAutzPolicy):
         """The concrete ACL authorization policy."""
 
         def __init__(self, users, context=None):
