@@ -309,37 +309,37 @@ autz_middleware Usage
 
 The autz middleware provides follow interface to use in applications:
 
-    - Using `autz.permit` coroutine.
-    - Using `autz.autz_required` decorator for aiohttp handlers.
+    - Using ``autz.permit`` coroutine.
+    - Using ``autz.autz_required`` decorator for aiohttp handlers.
 
-The `async def autz.permit(request, permission, context=None)` coroutine checks 
+The ``async def autz.permit(request, permission, context=None)`` coroutine checks 
 if permission is allowed for a given request with a given context. 
 The authorization checking is provided by authorization policy which is set by 
 setup function. The nature of permission and context is also determined by a policy.
 
-The `def autz_required(permission, context=None)` decorator for aiohttp's request 
+The ``def autz_required(permission, context=None)`` decorator for aiohttp's request 
 handlers checks if current user has requested permission with a given contex.
-If the user does not have the correct permission it raises `HTTPForbidden`.
+If the user does not have the correct permission it raises ``HTTPForbidden``.
 
 Note that context can be optional if authorization policy provides a way
 to specify global application context or if it does not require any. Also context 
 parameter can be used to override global context if it is provided by authorization policy.
 
 To use an authorization policy with autz middleware a class of policy should be created
-inherited from `autz.abc.AbstractAutzPolicy`. The only thing that should be implemented
-is `permit` method (see `Create custom authorization policy to use with autz middleware`_). 
+inherited from ``autz.abc.AbstractAutzPolicy``. The only thing that should be implemented
+is ``permit`` method (see `Create custom authorization policy to use with autz middleware`_). 
 The autz middleware has a built in ACL authorization policy 
 (see `Use ACL authorization policy with autz middleware`_).
 
 The recomended way to initialize this middleware is through
-`aiohttp_auth.autz.setup` or `aiohttp_auth.setup` functions. As the autz
-middleware can be used only with authentication `aiohttp_auth.auth`
-middleware it is preferred to use `aiohttp_auth.setup`.
+``aiohttp_auth.autz.setup`` or ``aiohttp_auth.setup`` functions. As the autz
+middleware can be used only with authentication ``aiohttp_auth.auth``
+middleware it is preferred to use ``aiohttp_auth.setup``.
 
 Use ACL authorization policy with autz middleware
 -------------------------------------------------
 
-The autz plugin has a built in ACL authorization policy in `autz.policy.acl` module.
+The autz plugin has a built in ACL authorization policy in ``autz.policy.acl`` module.
 This module introduces a set of class:
 
     AbsractACLAutzPolicy: 
@@ -365,7 +365,7 @@ This module introduces a set of class:
 
 As the library does not know how to get groups for user and it is always
 up to application, it provides abstract authorization acl policy
-class. Subclass should implement `acl_groups` method to use it with
+class. Subclass should implement ``acl_groups`` method to use it with
 autz_middleware.
 
 Note that an acl context can be specified globally while initializing
@@ -374,9 +374,9 @@ context will always override a global one while checking permissions.
 If there is no local context and global context is not set then a permit
 method will raise a RuntimeError.
 
-A context is an instance of `AbstractACLContext` subclass or a sequence of
+A context is an instance of ``AbstractACLContext`` subclass or a sequence of
 ACL tuples which consist of a Allow/Deny action, a group, and a sequence
-of permissions for that ACL group (see `acl_middleware Usage`).
+of permissions for that ACL group (see `acl_middleware Usage`_).
 
 Note that custom implementation of AbstractACLContext can be used to
 change the context form and the way it is processed.
@@ -533,13 +533,17 @@ The follow example shows how to create such simple custom policy:
 Testing with Pytest
 -------------------
 
-In order to test this middleware with pytest you need to install::
+In order to test this middleware with ``pytest`` you need to install::
 
-    $ pip install pytest pytest-aiohttp pytest-cov
+    $ pip install pytest pytest-aiohttp pytest-cov aiohttp_session
 
 And then run tests::
 
     $ py.test -v --cov-report=term-missing --cov=aiohttp_auth --cov=pytests pytests
+
+Or using ``tox`` just run::
+
+    $ tox
 
 
 License
