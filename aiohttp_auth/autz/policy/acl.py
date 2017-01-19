@@ -124,7 +124,7 @@ class AbsractACLAutzPolicy(AbstractAutzPolicy):
     method will raise a RuntimeError.
 
     A context is an instance of AbstractACLContext subclass or a sequence of
-    ACL tuples which consist of a Allow/Denyaction, a group, and a sequence
+    ACL tuples which consist of a Allow/Deny action, a group, and a sequence
     of permissions for that ACL group.
     For example::
 
@@ -156,7 +156,7 @@ class AbsractACLAutzPolicy(AbstractAutzPolicy):
 
                 # we will retrieve groups using some kind of users dict
                 # here you can use db or cache or any other needed data
-                self.cache = cache
+                self.users = users
 
             async def acl_groups(self, user_identity):
                 # implement application specific logic here
@@ -174,7 +174,7 @@ class AbsractACLAutzPolicy(AbstractAutzPolicy):
             ...
             users = ...
             # Create application global context.
-            # It can be overwritten in autz.permit fucntion or in
+            # It can be overridden in autz.permit fucntion or in
             # autz_required decorator using local context explicitly.
             context = [(Permission.Allow, 'view_group', {'view', }),
                        (Permission.Allow, 'edit_group', {'view', 'edit'})]

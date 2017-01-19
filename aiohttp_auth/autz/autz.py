@@ -15,7 +15,7 @@ def autz_middleware(autz_policy):
 
     The autz middleware provides follow interface to use in applications:
 
-        - Using autz.permit function.
+        - Using autz.permit coroutine.
         - Using autz.autz_required decorator for aiohttp handlers.
 
     Note that the recomended way to initialize this middleware is through
@@ -52,7 +52,7 @@ async def permit(request, permission, context=None):
     set by setup function. The nature of permission and context is also
     determined by the given policy.
 
-    Note that this function uses aiohttp_auth.auth.get_auth function
+    Note that this coroutine uses aiohttp_auth.auth.get_auth coroutine
     to determine user_identity for given request. So that middleware should
     be installed too.
 
@@ -90,6 +90,6 @@ def setup(app, autz_policy):
 
     Args:
         app: aiohttp Application object.
-        autz_policy: a subclass of aiohttp_auth.autz.abc.AbstractAutzPolicy.
+        autz_policy: A subclass of aiohttp_auth.autz.abc.AbstractAutzPolicy.
     """
     app.middlewares.append(autz_middleware(autz_policy))
