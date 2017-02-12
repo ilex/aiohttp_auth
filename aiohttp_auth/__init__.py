@@ -1,7 +1,17 @@
+"""Authentication and Authorization plugins for AIOHTTP."""
 from .auth import auth_middleware
 from .autz import autz_middleware
 from .acl import acl_middleware
-from . import auth, acl, autz
+from . import auth, autz
+
+# silence pyflakes
+assert auth_middleware
+assert autz_middleware
+assert acl_middleware
+assert auth, autz
+
+
+__version__ = '0.2.0.dev0'
 
 
 def setup(app, auth_policy, autz_policy):
