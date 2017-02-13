@@ -267,8 +267,8 @@ async def test_middleware_auth_required_decorator(app, client):
 
     cli = await client(app)
 
-    response = await assert_response(cli.get('/test'), '403: Forbidden')
-    assert response.status == 403
+    response = await assert_response(cli.get('/test'), '401: Unauthorized')
+    assert response.status == 401
 
     response = await assert_response(cli.get('/remember'), 'remember')
 

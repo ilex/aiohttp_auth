@@ -1,34 +1,43 @@
+"""Authentication decorators."""
 from functools import wraps
 from aiohttp import web
 from .auth import get_auth
 
 
 def auth_required(func):
-    """Utility decorator that checks if a user has been authenticated for this
-    request.
+    """Decorator to check if an user has been authenticated for this request.
 
     Allows views to be decorated like:
 
+    .. code-block:: python
+
         @auth_required
-        def view_func(request):
+        async def view_func(request):
             pass
 
-    providing a simple means to ensure that whoever is calling the function has
-    the correct authentication details.
+    providing a simple means to ensure that whoever is calling the function
+    has the correct authentication details.
+
+    .. warning::
+
+        In version 0.1.1 decorator raised a ``web.HTTPForbidden`` (status
+        code 403) error if user was not authenticated. And now it raises a
+        ``web.HTTPUnauthorized`` (status code 401) to distinguish
+        authentication error from authorization one.
 
     Args:
-        func: Function object being decorated and raises HTTPForbidden if not
+        func: Function object being decorated.
 
     Returns:
-        A function object that will raise web.HTTPForbidden() if the passed
-        request does not have the correct permissions to access the view.
+        A function object that will raise ``web.HTTPUnauthorized()`` if the
+        passed request does not have the correct permissions to access the
+        view.
     """
     @wraps(func)
     async def wrapper(*args):
         if (await get_auth(args[-1])) is None:
-            raise web.HTTPForbidden()
+            raise web.HTTPUnauthorized()
 
         return await func(*args)
 
     return wrapper
-
