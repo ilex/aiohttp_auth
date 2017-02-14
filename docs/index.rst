@@ -30,6 +30,14 @@ This is a fork of `aiohttp_auth <https://github.com/gnarlychicken/aiohttp_auth>`
 library that fixes some bugs and security issues and also introduces a generic 
 authorization ``autz`` middleware with built in ACL authorization policy.
 
+Install
+-------
+
+Install ``aiohttp_auth_autz`` using ``pip``::
+
+    $ pip install aiohttp_auth_autz
+
+
 License
 -------
 The library is licensed under a MIT license.
