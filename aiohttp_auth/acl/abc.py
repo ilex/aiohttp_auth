@@ -9,14 +9,18 @@ class AbstractACLGroupsCallback(abc.ABC):
     method and register object of that class with setup function as
     acl_groups_callback.
 
-    Usage example::
+    Usage example:
+
+    .. code-block:: python
 
         class ACLGroupsCallback(AbstractACLGroupsCallback):
 
             def __init__(self, cache):
+                # store some kind of cache
                 self.cache = cache
 
             async def acl_groups(self, user_id):
+                # implement logic to return user's groups.
                 user = await self.cache.get(user_id)
                 return user.groups()
 

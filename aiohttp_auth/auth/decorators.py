@@ -20,10 +20,11 @@ def auth_required(func):
 
     .. warning::
 
-        In version 0.1.1 decorator raised a ``web.HTTPForbidden`` (status
-        code 403) error if user was not authenticated. And now it raises a
-        ``web.HTTPUnauthorized`` (status code 401) to distinguish
-        authentication error from authorization one.
+        .. versionchanged:: 0.2.0
+            In versions prior 0.2.0 the ``web.HTTPForbidden`` was raised
+            (status code 403) if user was not authenticated. Now the
+            ``web.HTTPUnauthorized`` (status code 401) is raised to distinguish
+            authentication error from authorization one.
 
     Args:
         func: Function object being decorated.
