@@ -23,12 +23,16 @@ def version():
         return version
 
 
+long_description = '\n'.join((open('README.rst').read(),
+                              open('CHANGELOG.rst').read()))
+
+
 setup(
     name="aiohttp_auth_autz",
     version=version(),
     description=('Authorization and authentication '
                  'middleware plugin for aiohttp.'),
-    long_description=open('README.rst').read(),
+    long_description=long_description,
     setup_requires=['pytest-runner'],
     install_requires=install_requires,
     tests_require=tests_require,

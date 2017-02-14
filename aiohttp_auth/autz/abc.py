@@ -6,8 +6,8 @@ class AbstractAutzPolicy(abc.ABC):
     """Abstact base class for authentication policies.
 
     Each policy should be inherited from this class and implement
-    permit method. That is all needed to use such policy with
-    autz_middleware.
+    ``permit`` method. That is all needed to use such policy with
+    ``autz_middleware``.
     """
 
     @abc.abstractmethod
@@ -15,11 +15,11 @@ class AbstractAutzPolicy(abc.ABC):
         """Check if user has permission accoding to context.
 
         Args:
-            user_identity: User identity returned from auth.get_auth.
+            user_identity: User identity returned from ``auth.get_auth``.
             permission: Permission method checks for.
             context: Context which is used to determine permit of permission.
 
         Returns:
-            bool: True if permission is allowed and False otherwise.
+            ``True`` if permission is allowed and ``False`` otherwise.
         """
         pass  # pragma: no cover
