@@ -1,0 +1,7 @@
+aiohttp
+ticket_auth==0.1.4
+pytest
+pytest-aiohttp
+pytest-cov
+aiohttp_session
+Sphinx

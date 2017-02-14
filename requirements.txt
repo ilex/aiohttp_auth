@@ -1,0 +1,2 @@
+aiohttp
+ticket_auth==0.1.4

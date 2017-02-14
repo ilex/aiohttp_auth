@@ -1,4 +1,4 @@
-from .auth import auth_middleware, get_auth, remember, forget
+from .auth import auth_middleware, get_auth, remember, forget, setup
 from .decorators import auth_required
 from .cookie_ticket_auth import CookieTktAuthentication
 

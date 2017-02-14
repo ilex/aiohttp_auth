@@ -1,3 +1,4 @@
+"""Athentication middleware."""
 from .abstract_auth import AbstractAuthentication
 
 """Key used to store the auth policy in the request object"""
@@ -8,8 +9,9 @@ AUTH_KEY = 'aiohttp_auth.auth'
 
 
 def auth_middleware(policy):
-    """Returns a aiohttp_auth middleware factory for use by the aiohttp
-    application object.
+    """Return an authentication middleware factory.
+
+    The middleware is for use by the aiohttp application object.
 
     Args:
         policy: A authentication policy with a base class of
@@ -37,7 +39,7 @@ def auth_middleware(policy):
 
 
 async def get_auth(request):
-    """Returns the user_id associated with a particular request.
+    """Return the user_id associated with a particular request.
 
     Args:
         request: aiohttp Request object.
@@ -49,7 +51,6 @@ async def get_auth(request):
     Raises:
         RuntimeError: Middleware is not installed
     """
-
     auth_val = request.get(AUTH_KEY)
     if auth_val:
         return auth_val
@@ -63,7 +64,7 @@ async def get_auth(request):
 
 
 async def remember(request, user_id):
-    """Called to store and remember the userid for a request
+    """Called to store and remember the userid for a request.
 
     Args:
         request: aiohttp Request object.
@@ -80,13 +81,13 @@ async def remember(request, user_id):
 
 
 async def forget(request):
-    """Called to forget the userid for a request
+    """Called to forget the userid for a request.
 
     Args:
-        request: aiohttp Request object
+        request: aiohttp Request object.
 
     Raises:
-        RuntimeError: Middleware is not installed
+        RuntimeError: Middleware is not installed.
     """
     auth_policy = request.get(POLICY_KEY)
     if auth_policy is None:
@@ -94,3 +95,13 @@ async def forget(request):
 
     return await auth_policy.forget(request)
 
+
+def setup(app, policy):
+    """Setup middleware in aiohttp fashion.
+
+    Args:
+        app: aiohttp Application object.
+        policy: An authentication policy with a base class of
+            AbstractAuthentication.
+    """
+    app.middlewares.append(auth_middleware(policy))
