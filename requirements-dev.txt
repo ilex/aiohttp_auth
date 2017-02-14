@@ -4,3 +4,4 @@ pytest
 pytest-aiohttp
 pytest-cov
 aiohttp_session
+Sphinx
