@@ -184,28 +184,8 @@ ACL authorization policy for autz middleware
 --------------------------------------------
 
 The ``autz`` plugin has a built in ACL authorization policy in ``autz.policy.acl`` module.
-This module introduces a set of classes:
-
-    ``AbstractACLAutzPolicy``: 
-        Abstract base class to create ACL authorization
-        policy class. The subclass should define how to retrieve users
-        groups.
-
-    ``AbstractACLContext``: 
-        Abstract base class for ACL context containers.
-        Context container defines a representation of ACL data structure,
-        a storage method and how to process ACL context and groups
-        to authorize user with permissions.
-
-    ``NaiveACLContext``: 
-        ACL context container which is initialized with list
-        of ACL tuples and stores them as they are. The implementation
-        of permit process is the same as used by ``acl_middleware``.
-
-    ``ACLContext``: 
-        The same as ``NaiveACLContext`` but makes some transformation
-        of incoming ACL tuples. This may helps with a perfomance of the permit
-        process.
+This module introduces an ``AbstractACLAutzPolicy`` - the abstract base class to create an ACL 
+authorization policy class. The subclass should define how to retrieve user's groups.
 
 As the library does not know how to get groups for user and it is always
 up to application, it provides abstract authorization ACL policy
@@ -215,24 +195,39 @@ class. Subclass should implement ``acl_groups`` method to use it with
 Note that an ACL context can be specified globally while initializing
 policy or locally through ``autz.permit`` function's parameter. A local
 context will always override a global one while checking permissions.
-If there is no local context and global context is not set then a permit
-method will raise a ``RuntimeError``.
+If there is no local context and global context is not set then the
+``permit`` method will raise a ``RuntimeError``.
 
-A context is an instance of ``AbstractACLContext`` subclass or a sequence of
-ACL tuples which consist of a ``Allow``/``Deny`` action, a group, and a sequence
-of permissions for that ACL group (see `ACL Middleware Usage`_).
+A context is  a sequence of ACL tuples which consist of an
+``Allow``/``Deny`` action, a group, and a set of permissions for that ACL
+group. For example:
 
-Note that custom implementation of ``AbstractACLContext`` can be used to
-change the context form and the way it is processed.
+.. code-block:: python
+
+    context = [(Permission.Allow, 'view_group', {'view', }),
+               (Permission.Allow, 'edit_group', {'view', 'edit'}),]
+
+ACL tuple sequences are checked in order, with the first tuple that
+matches the group the user is a member of, and includes the permission
+passed to the function, to be the matching ACL group. If no ACL group is
+found, the ``permit`` method returns ``False``.
+
+Groups and permissions need only be immutable objects, so can be strings,
+numbers, enumerations, or other immutable objects.
+
+.. note:: Groups that are returned by ``acl_groups`` (if they are not
+    ``None``) will then be extended internally with ``Group.Everyone`` and
+    ``Group.AuthenticatedUser``.
 
 Usage example:
 
 .. code-block:: python
     
     from aiohttp import web
-    from aiohttp_auth import autz, Permission
+    from aiohttp_auth import autz 
     from aiohttp_auth.autz import autz_required
     from aiohttp_auth.autz.policy import acl
+    from aiohttp_auth.permissions import Permission
 
 
     # create an acl authorization policy class
@@ -250,13 +245,13 @@ Usage example:
         async def acl_groups(self, user_identity):
             """Return acl groups for given user identity.
 
-            This method should return a set of groups for given user_identity.
+            This method should return a sequence of groups for given user_identity.
 
             Args:
                 user_identity: User identity returned by auth.get_auth.
 
             Returns:
-                Set of acl groups for the user identity.
+                Sequence of acl groups (possibly empty) for the user identity or None.
             """
             # implement application specific logic here
             user = self.users.get(user_identity, None)
@@ -278,8 +273,6 @@ Usage example:
         # autz_required decorator using local context explicitly.
         context = [(Permission.Allow, 'view_group', {'view', }),
                    (Permission.Allow, 'edit_group', {'view', 'edit'})]
-        # this raw context will be wrapped by ACLContext container internally
-        # you can explicitly create acl context class you need and pass it here
         autz_policy = ACLAutzPolicy(users, context)
 
         # install auth and autz middleware in aiohttp fashion
@@ -294,7 +287,6 @@ Usage example:
             pass
 
 
-    # raw local context will wrapped with NaiveACLContext container internally
     local_context = [(Permission.Deny, 'view_group', {'view', })]
 
     # authorization using autz decorator applying to app handler

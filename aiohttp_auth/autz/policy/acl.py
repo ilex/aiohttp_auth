@@ -41,8 +41,8 @@ class AbstractACLAutzPolicy(AbstractAutzPolicy):
     numbers, enumerations, or other immutable objects.
 
     .. note:: Groups that are returned by ``acl_groups`` (if they are not
-    ``None``) will then be extended internally with ``Group.Everyone`` and
-    ``Group.AuthenticatedUser``.
+        ``None``) will then be extended internally with ``Group.Everyone`` and
+        ``Group.AuthenticatedUser``.
 
     Usage example:
 
@@ -108,7 +108,7 @@ class AbstractACLAutzPolicy(AbstractAutzPolicy):
     async def acl_groups(self, user_identity):
         """Return ACL groups for given user identity.
 
-        Subclass should implement this method to return a set of
+        Subclass should implement this method to return a sequence of
         groups for given ``user_identity``.
 
         Args:
