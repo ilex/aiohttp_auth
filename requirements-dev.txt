@@ -1,4 +1,5 @@
 aiohttp
+yarl==0.9.0
 ticket_auth==0.1.4
 pytest
 pytest-aiohttp
