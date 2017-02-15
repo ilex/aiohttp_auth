@@ -1,2 +1,3 @@
 aiohttp
 ticket_auth==0.1.4
+yarl==0.9.0

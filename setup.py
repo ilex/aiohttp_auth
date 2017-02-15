@@ -4,7 +4,7 @@ import re
 from setuptools import setup, find_packages
 
 
-install_requires = ['aiohttp', 'ticket_auth==0.1.4']
+install_requires = ['aiohttp', 'ticket_auth==0.1.4', 'yarl==0.9.0']
 
 
 tests_require = ['pytest', 'pytest-aiohttp', 'pytest-cov', 'aiohttp_session']

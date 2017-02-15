@@ -50,20 +50,20 @@ with an aiohttp application.
         async def acl_groups(self, user_identity):
             """Return acl groups for given user identity.
 
-            This method should return a set of groups for given user_identity.
+            This method should return a sequence of groups for given user_identity.
 
             Args:
                 user_identity: User identity returned by auth.get_auth.
 
             Returns:
-                Set of acl groups for the user identity.
+                Sequence of acl groups for the user identity.
             """
             # implement application specific logic here
             user = self.db.get(user_identity, None)
             if user is None:
-                # return empty set of groups for not authenticated users
-                # middleware will fill it with Group.Everyone
-                return set()
+                # return empty tuple in order to give a chance  
+                # to Group.Everyone
+                return tuple()
 
             return user['groups']
 

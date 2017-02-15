@@ -27,17 +27,3 @@ ACL Authorization Policy
 .. autoclass:: aiohttp_auth.autz.policy.acl.AbstractACLAutzPolicy
     :members:
     :special-members: __init__
-
-.. autoclass:: aiohttp_auth.autz.policy.acl.AbstractACLContext
-    :members:
-
-.. autoclass:: aiohttp_auth.autz.policy.acl.NaiveACLContext
-    :members:
-    :special-members: __init__
-
-.. autoclass:: aiohttp_auth.autz.policy.acl.NaiveACLContext
-    :members:
-    :special-members: __init__
-    :inherited-members:
-
-
