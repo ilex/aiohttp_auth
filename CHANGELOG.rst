@@ -3,6 +3,16 @@ Changelog
 
 0.2.1 (XXXX-XX-XX)
 ------------------
+- ``autz`` middleware:
+  
+  - Simplify ``acl`` authorization policy by moving permit logic into ``policy.acl.AbstractACLAutzPolicy``.
+    
+  - Remove ``policy.acl.AbstractACLContext`` class.
+
+  - Remove ``policy.acl.NaiveACLContext`` class.
+    
+  - Remove ``policy.acl.ACLContext`` class.
+
 
 0.2.0 (2017-02-14)
 ------------------
