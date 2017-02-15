@@ -5,7 +5,7 @@ from .acl import acl_middleware
 from . import auth, autz
 
 
-__version__ = '0.2.0.post0'
+__version__ = '0.2.1.dev0'
 
 
 def setup(app, auth_policy, autz_policy):
