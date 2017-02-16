@@ -6,3 +6,5 @@ dist
 *.egg
 *.eggs
 *.egg-info
+docs/_build
+.python-version
