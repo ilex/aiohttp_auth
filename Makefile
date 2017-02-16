@@ -8,6 +8,8 @@ clean:
 	rm -r -f .cache
 	rm -r -f .eggs
 	rm -r -f .tox
+	rm -r -f build
+	rm -r -f dist
 sdist: clean
 	python setup.py sdist
 test:
@@ -19,6 +21,6 @@ doc:
 testpypi: clean
 	pip install wheel
 	python setup.py sdist bdist_wheel upload -r testpypi
-pypi:
+pypi: clean
 	pip install wheel
 	python setup.py sdist bdist_wheel upload
