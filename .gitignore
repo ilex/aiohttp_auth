@@ -1,8 +1,11 @@
 __pycache__
 dist
+build
 .cache
 .coverage
 .tox
 *.egg
 *.eggs
 *.egg-info
+docs/_build
+.python-version

@@ -79,7 +79,7 @@ async def test_no_middleware_installed(app, client):
 async def test_correct_groups_returned_for_authenticated_user():
     policy = ACLAutzPolicy([])
     groups = await policy.acl_groups('some_user')
-    groups = await policy.context.extended_user_groups('some_user', groups)
+    groups = acl.extend_user_groups('some_user', groups)
 
     assert 'group0' in groups
     assert 'group1' in groups
@@ -91,7 +91,7 @@ async def test_correct_groups_returned_for_authenticated_user():
 async def test_correct_groups_returned_for_unauthenticated_user():
     policy = ACLAutzPolicy([])
     groups = await policy.acl_groups(None)
-    groups = await policy.context.extended_user_groups(None, groups)
+    groups = acl.extend_user_groups(None, groups)
 
     assert 'group0' in groups
     assert 'group1' in groups
@@ -103,15 +103,15 @@ async def test_correct_groups_returned_for_unauthenticated_user():
 async def test_no_groups_if_none_returned_from_acl_groups():
     policy = NoneACLAutzPolicy([])
     groups = await policy.acl_groups(None)
-    groups = await policy.context.extended_user_groups(None, groups)
+    groups = acl.extend_user_groups(None, groups)
 
     assert groups is None
 
 
 async def test_autz_acl_policy_permit_with_local_context():
-    context = [(Permission.Allow, 'group0', ('test0',)),
-               (Permission.Deny, 'group1', ('test1',)),
-               (Permission.Allow, Group.Everyone, ('test1',))]
+    context = [(Permission.Allow, 'group0', {'test0', }),
+               (Permission.Deny, 'group1', {'test1', }),
+               (Permission.Allow, Group.Everyone, {'test1', })]
 
     policy = ACLAutzPolicy(None)
 
@@ -120,9 +120,9 @@ async def test_autz_acl_policy_permit_with_local_context():
 
 
 async def test_autz_acl_policy_permit_with_global_context():
-    context = [(Permission.Allow, 'group0', ('test0',)),
-               (Permission.Deny, 'group1', ('test1',)),
-               (Permission.Allow, Group.Everyone, ('test1',))]
+    context = [(Permission.Allow, 'group0', {'test0', }),
+               (Permission.Deny, 'group1', {'test1', }),
+               (Permission.Allow, Group.Everyone, {'test1', })]
 
     policy = ACLAutzPolicy(context)
 
@@ -131,9 +131,9 @@ async def test_autz_acl_policy_permit_with_global_context():
 
 
 async def test_autz_permit_with_acl_policy_local_context(app, client):
-    context = [(Permission.Allow, 'group0', ('test0',)),
-               (Permission.Deny, 'group1', ('test1',)),
-               (Permission.Allow, Group.Everyone, ('test1',))]
+    context = [(Permission.Allow, 'group0', {'test0', }),
+               (Permission.Deny, 'group1', {'test1', }),
+               (Permission.Allow, Group.Everyone, {'test1', })]
 
     async def handler_test(request):
         assert (await autz.permit(request, 'test0', context)) is True
@@ -151,9 +151,9 @@ async def test_autz_permit_with_acl_policy_local_context(app, client):
 
 
 async def test_autz_permit_with_acl_policy_global_context(app, client):
-    context = [(Permission.Allow, 'group0', ('test0',)),
-               (Permission.Deny, 'group1', ('test1',)),
-               (Permission.Allow, Group.Everyone, ('test1',))]
+    context = [(Permission.Allow, 'group0', {'test0', }),
+               (Permission.Deny, 'group1', {'test1', }),
+               (Permission.Allow, Group.Everyone, {'test1', })]
 
     async def handler_test(request):
         assert (await autz.permit(request, 'test0')) is True
@@ -172,10 +172,10 @@ async def test_autz_permit_with_acl_policy_global_context(app, client):
 
 async def test_autz_permit_acl_policy_replace_global_context_with_local(
         app, client):
-    context = [(Permission.Deny, 'group1', ('test1', ))]
+    context = [(Permission.Deny, 'group1', {'test1', })]
 
     async def handler_test(request):
-        local_context = [(Permission.Allow, 'group1', ('test1', ))]
+        local_context = [(Permission.Allow, 'group1', {'test1', })]
 
         # with global context
         assert (await autz.permit(request, 'test1')) is False
@@ -194,9 +194,9 @@ async def test_autz_permit_acl_policy_replace_global_context_with_local(
 
 
 async def test_autz_acl_policy_permission_order(app, client):
-    context = [(Permission.Allow, Group.Everyone, ('test0',)),
-               (Permission.Deny, 'group1', ('test1',)),
-               (Permission.Allow, Group.Everyone, ('test1',))]
+    context = [(Permission.Allow, Group.Everyone, {'test0', }),
+               (Permission.Deny, 'group1', {'test1', }),
+               (Permission.Allow, Group.Everyone, {'test1', })]
 
     async def handler_test0(request):
         assert (await autz.permit(request, 'test0', context)) is True
@@ -226,9 +226,9 @@ async def test_autz_acl_policy_permission_order(app, client):
 
 
 async def test_autz_required_decorator_with_acl_policy(loop, app, client):
-    context = [(Permission.Deny, 'group0', ('test0',)),
-               (Permission.Allow, 'group0', ('test1',)),
-               (Permission.Allow, 'group1', ('test0', 'test1'))]
+    context = [(Permission.Deny, 'group0', {'test0', }),
+               (Permission.Allow, 'group0', {'test1', }),
+               (Permission.Allow, 'group1', {'test0', 'test1'})]
 
     class CustomACLAutzPolicy(acl.AbstractACLAutzPolicy):
         def __init__(self, group=None, context=None):
@@ -273,8 +273,8 @@ async def test_autz_required_decorator_with_acl_policy(loop, app, client):
 
 
 async def test_autz_acl_not_matching_acl_group(app, client):
-    context = [(Permission.Allow, 'group2', ('test0')),
-               (Permission.Allow, 'group3', ('test0', 'test1'))]
+    context = [(Permission.Allow, 'group2', {'test0', }),
+               (Permission.Allow, 'group3', {'test0', 'test1'})]
 
     async def handler_test(request):
         assert (await autz.permit(request, 'test0', context)) is False
@@ -312,45 +312,37 @@ async def test_autz_acl_no_context_raises_error(app, client):
     await assert_response(cli.get('/test'), 'test')
 
 
-async def test_autz_acl_naive_context():
-    acl_context = [(Permission.Allow, 'group2', ('test0'))]
+async def test_autz_acl_permit():
+    acl_context = [(Permission.Allow, 'group0', {'test0', 'test2'}),
+                   (Permission.Deny, 'group1', {'test1', }),
+                   (Permission.Allow, 'group0', {'test1', 'test0'}),
+                   (Permission.Allow, 'group1', {'test1', 'test0'})]
 
-    context = acl.NaiveACLContext(acl_context)
+    class CustomACLAutzPolicy(acl.AbstractACLAutzPolicy):
+        def __init__(self, group=None, context=None):
+            super().__init__(context)
+            self.group = group
 
-    assert context._context == acl_context
+        async def acl_groups(self, user_identity):
+            return (self.group, )
 
+    policy = CustomACLAutzPolicy(group='group0', context=acl_context)
 
-async def test_autz_acl_context():
-    acl_context = [(Permission.Allow, 'group0', ('test0'))]
+    assert (await policy.permit(None, 'test0')) is True
+    assert (await policy.permit(None, 'test1')) is True
+    assert (await policy.permit(None, 'test2')) is True
+    assert (await policy.permit(None, 'test3')) is False
 
-    context = acl.ACLContext(acl_context)
+    policy = CustomACLAutzPolicy(group='group1', context=acl_context)
 
-    assert context._context != acl_context
-    assert isinstance(context._context, tuple)
-    assert isinstance(context._context[0][2], set)
+    assert (await policy.permit(None, 'test0')) is True
+    assert (await policy.permit(None, 'test1')) is False
+    assert (await policy.permit(None, 'test2')) is False
+    assert (await policy.permit(None, 'test3')) is False
 
+    policy = CustomACLAutzPolicy(group='group3', context=acl_context)
 
-@pytest.mark.parametrize('context_class', (acl.NaiveACLContext,
-                                           acl.ACLContext))
-async def test_autz_acl_context_permit(context_class):
-    acl_context = [(Permission.Allow, 'group0', ('test0', 'test2')),
-                   (Permission.Deny, 'group1', ('test1',)),
-                   (Permission.Allow, 'group0', ('test1', 'test0')),
-                   (Permission.Allow, 'group1', ('test1', 'test0'))]
-
-    context = context_class(acl_context)
-
-    assert (await context.permit(None, {'group0', }, 'test0')) is True
-    assert (await context.permit(None, {'group0', }, 'test1')) is True
-    assert (await context.permit(None, {'group0', }, 'test2')) is True
-    assert (await context.permit(None, {'group0', }, 'test3')) is False
-
-    assert (await context.permit(None, {'group1', }, 'test0')) is True
-    assert (await context.permit(None, {'group1', }, 'test1')) is False
-    assert (await context.permit(None, {'group1', }, 'test2')) is False
-    assert (await context.permit(None, {'group1', }, 'test3')) is False
-
-    assert (await context.permit(None, {'group3', }, 'test1')) is False
-    assert (await context.permit(None, {'group3', }, 'test2')) is False
-    assert (await context.permit(None, {'group3', }, 'test3')) is False
-    assert (await context.permit(None, {'group3', }, 'test4')) is False
+    assert (await policy.permit(None, 'test1')) is False
+    assert (await policy.permit(None, 'test2')) is False
+    assert (await policy.permit(None, 'test3')) is False
+    assert (await policy.permit(None, 'test4')) is False
