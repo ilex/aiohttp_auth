@@ -3,5 +3,5 @@ ticket_auth==0.1.4
 pytest
 pytest-aiohttp
 pytest-cov
-aiohttp_session
+aiohttp-session==0.8.0
 Sphinx
