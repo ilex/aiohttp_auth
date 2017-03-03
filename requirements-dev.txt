@@ -2,6 +2,6 @@ aiohttp==1.3.3
 ticket_auth==0.1.4
 pytest==3.0.6
 pytest-aiohttp==0.1.3
-pytest-cov
+pytest-cov==2.4.0
 aiohttp_session
 Sphinx
