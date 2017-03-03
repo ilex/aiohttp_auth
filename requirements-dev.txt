@@ -4,4 +4,4 @@ pytest
 pytest-aiohttp
 pytest-cov
 aiohttp_session
-Sphinx
+Sphinx==1.5.3
