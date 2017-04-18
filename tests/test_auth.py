@@ -1,7 +1,7 @@
 import asyncio
 from os import urandom
 import pytest
-from aiohttp import web
+from aiohttp import web, ServerDisconnectedError
 from aiohttp_auth import auth
 import aiohttp_session
 from utils import assert_response
@@ -276,7 +276,30 @@ async def test_middleware_auth_required_decorator(app, client):
     assert response.status == 200
 
 
-async def test_middleware_cannot_store_auth_in_cookie_when_response_started(
+async def test_middleware_auth_required_decorator_with_view(app, client):
+    class MyView(web.View):
+        @auth.auth_required
+        async def get(self):
+            return web.Response(text='test')
+
+    secret = b'01234567890abcdef'
+    policy = auth.CookieTktAuthentication(secret, 120, cookie_name='auth')
+
+    auth.setup(app, policy)
+    app.router.add_route('*', '/test', MyView)
+
+    cli = await client(app)
+
+    response = await assert_response(cli.get('/test'), '401: Unauthorized')
+    assert response.status == 401
+
+    response = await assert_response(cli.get('/remember'), 'remember')
+
+    response = await assert_response(cli.get('/test'), 'test')
+    assert response.status == 200
+
+
+async def test_middleware_cannot_store_auth_in_cookie_when_response_prepared(
         app, client):
     async def handler_test(request):
         await auth.remember(request, 'some_user')
@@ -292,5 +315,5 @@ async def test_middleware_cannot_store_auth_in_cookie_when_response_started(
 
     cli = await client(app)
 
-    response = await cli.get('/test')
-    assert policy.cookie_name not in response.cookies
+    with pytest.raises(ServerDisconnectedError):
+        await cli.get('/test')

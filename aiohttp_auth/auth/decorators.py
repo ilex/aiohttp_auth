@@ -36,7 +36,10 @@ def auth_required(func):
     """
     @wraps(func)
     async def wrapper(*args):
-        if (await get_auth(args[-1])) is None:
+        request = (args[-1].request
+                   if isinstance(args[-1], web.View)
+                   else args[-1])
+        if (await get_auth(request)) is None:
             raise web.HTTPUnauthorized()
 
         return await func(*args)

@@ -1,2 +1,2 @@
-aiohttp
+aiohttp>=2.0.7
 ticket_auth==0.1.4

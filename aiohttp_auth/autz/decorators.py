@@ -35,7 +35,9 @@ def autz_required(permission, context=None):
 
         @wraps(func)
         async def wrapper(*args):
-            request = args[-1]
+            request = (args[-1].request
+                       if isinstance(args[-1], web.View)
+                       else args[-1])
 
             if await autz.permit(request, permission, context):
                 return await func(*args)

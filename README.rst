@@ -50,6 +50,9 @@ Install ``aiohttp_auth_autz`` using ``pip``::
 Getting Started
 ---------------
 
+A simple example how to use authentication and authorization middleware
+with an aiohttp application.
+
 .. code-block:: python
 
     import asyncio
@@ -78,9 +81,9 @@ Getting Started
 
     # global ACL context
     context = [(Permission.Allow, 'guest', {'view', }),
-            (Permission.Deny, 'guest', {'edit', }),
-            (Permission.Allow, 'staff', {'view', 'edit', 'admin_view'}),
-            (Permission.Allow, Group.Everyone, {'view_home', })]
+               (Permission.Deny, 'guest', {'edit', }),
+               (Permission.Allow, 'staff', {'view', 'edit', 'admin_view'}),
+               (Permission.Allow, Group.Everyone, {'view_home', })]
 
 
     # create an ACL authorization policy class
@@ -107,7 +110,7 @@ Getting Started
             # implement application specific logic here
             user = self.db.get(user_identity, None)
             if user is None:
-                # return empty tuple in order to give a chance 
+                # return empty tuple in order to give a chance  
                 # to Group.Everyone
                 return tuple()
 
@@ -157,19 +160,26 @@ Getting Started
         return web.Response(text=text)
 
 
-    @autz_required('view')
-    async def view(request):
-        return web.Response(text='View Page')
+    # decorators can work with class based views
+    class MyView(web.View):
+        """Class based view."""
+
+        @autz_required('view')
+        async def get(self):
+            # example of permit using
+            if await autz.permit(self.request, 'view'):
+                return web.Response(text='View Page')
+            return web.Response(text='View is not permitted')
 
 
     def init_app(loop):
-        app = web.Application(loop=loop)
+        app = web.Application()
 
         # Create an auth ticket mechanism that expires after 1 minute (60
         # seconds), and has a randomly generated secret. Also includes the
         # optional inclusion of the users IP address in the hash
         auth_policy = auth.CookieTktAuthentication(urandom(32), 60,
-                                                include_ip=True)
+                                                   include_ip=True)
 
         # Create an ACL authorization policy
         autz_policy = ACLAutzPolicy(db, context)
@@ -181,7 +191,7 @@ Getting Started
         app.router.add_get('/login', login)
         app.router.add_get('/logout', logout)
         app.router.add_get('/admin', admin)
-        app.router.add_get('/view', view)
+        app.router.add_route('*', '/view', MyView)
 
         return app
 
@@ -189,7 +199,7 @@ Getting Started
     loop = asyncio.get_event_loop()
     app = init_app(loop)
 
-    web.run_app(app, host='127.0.0.1')
+    web.run_app(app, host='127.0.0.1', loop=loop)
 
 
 License

@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.2.2 (2017-04-18)
+------------------
+
+- Move to ``aiohttp`` 2.x.
+
+- Add support of middlewares decorators for ``aiohttp.web.View`` handlers.
+
+- Add ``uvloop`` as IO loop for tests.
+
 0.2.1 (2017-02-16)
 ------------------
 - ``autz`` middleware:
