@@ -249,10 +249,16 @@ async def test_autz_required_decorator_with_acl_policy(loop, app, client):
     async def handler_test_global(request):
         return web.Response(text='test_global')
 
+    class MyView(web.View):
+        @autz_required('test0', context)
+        async def get(self):
+            return web.Response(text='test_view')
+
     policy = CustomACLAutzPolicy(context=context)
     autz.setup(app, policy)
     app.router.add_get('/test', handler_test)
     app.router.add_get('/test_global', handler_test_global)
+    app.router.add_route('*', '/test_view', MyView)
 
     cli = await client(app)
 
@@ -260,16 +266,21 @@ async def test_autz_required_decorator_with_acl_policy(loop, app, client):
     assert response.status == 403
     response = await cli.get('/test_global')
     assert response.status == 403
+    response = await cli.get('/test_view')
+    assert response.status == 403
 
     policy.group = 'group0'
     response = await cli.get('/test')
     assert response.status == 403
     response = await cli.get('/test_global')
     assert response.status == 403
+    response = await cli.get('/test_view')
+    assert response.status == 403
 
     policy.group = 'group1'
     await assert_response(cli.get('/test'), 'test')
     await assert_response(cli.get('/test_global'), 'test_global')
+    await assert_response(cli.get('/test_view'), 'test_view')
 
 
 async def test_autz_acl_not_matching_acl_group(app, client):
