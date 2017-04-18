@@ -32,7 +32,9 @@ def acl_required(permission, context):
 
         @wraps(func)
         async def wrapper(*args):
-            request = args[-1]
+            request = (args[-1].request
+                       if isinstance(args[-1], web.View)
+                       else args[-1])
 
             context_value = context() if callable(context) else context
 

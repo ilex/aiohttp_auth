@@ -207,22 +207,32 @@ async def test_acl_required_decorator(loop, app, client):
     async def handler_test(request):
         return web.Response(text='test')
 
+    class MyView(web.View):
+        @acl.acl_required('test0', context)
+        async def get(self):
+            return web.Response(text='test_view')
+
     groups_callback = GroupsCallback()
     acl.setup(app, groups_callback)
     app.router.add_get('/test', handler_test)
+    app.router.add_route('*', '/test_view', MyView)
 
     cli = await client(app)
 
     response = await cli.get('/test')
     assert response.status == 403
+    response = await cli.get('/test_view')
+    assert response.status == 403
 
     groups_callback.group = 'group0'
     response = await cli.get('/test')
     assert response.status == 403
+    response = await cli.get('/test_view')
+    assert response.status == 403
 
     groups_callback.group = 'group1'
-    response = await cli.get('/test')
     await assert_response(cli.get('/test'), 'test')
+    await assert_response(cli.get('/test_view'), 'test_view')
 
 
 async def test_acl_not_matching_acl_group(app, client):

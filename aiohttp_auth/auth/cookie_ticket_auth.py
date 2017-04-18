@@ -50,7 +50,7 @@ class CookieTktAuthentication(TktAuthentication):
         associated cookie is deleted instead.
 
         This function requires the response to be a aiohttp Response object,
-        and assumes that the response has not started if the remember or
+        and assumes that the response has not prepared if the remember or
         forget functions are called during the request.
 
         Args:
@@ -58,12 +58,12 @@ class CookieTktAuthentication(TktAuthentication):
             response: response object returned from the handled view
 
         Raises:
-            RuntimeError: Raised if response has already started.
+            RuntimeError: Raised if response has already prepared.
         """
         await super().process_response(request, response)
         if COOKIE_AUTH_KEY in request:
-            if response.started:
-                raise RuntimeError("Cannot save cookie into started response")
+            if response.prepared:
+                raise RuntimeError("Cannot save cookie into prepared response")
 
             cookie = request[COOKIE_AUTH_KEY]
             if cookie == '':

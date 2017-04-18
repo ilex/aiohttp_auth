@@ -4,10 +4,11 @@ import re
 from setuptools import setup, find_packages
 
 
-install_requires = ['aiohttp', 'ticket_auth==0.1.4']
+install_requires = ['aiohttp>=2.0.7', 'ticket_auth==0.1.4']
 
 
-tests_require = ['pytest', 'pytest-aiohttp', 'pytest-cov', 'aiohttp_session']
+tests_require = ['pytest', 'pytest-aiohttp', 'pytest-cov',
+                 'aiohttp_session', 'uvloop']
 
 
 def version():
