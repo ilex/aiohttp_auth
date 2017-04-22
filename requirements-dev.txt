@@ -2,7 +2,7 @@ aiohttp>=2.0.7
 ticket_auth==0.1.4
 pytest
 pytest-aiohttp
-pytest-cov
+pytest-cov==2.4.0
 aiohttp_session
 uvloop
 Sphinx
