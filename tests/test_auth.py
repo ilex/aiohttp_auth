@@ -149,7 +149,7 @@ async def test_middleware_gets_auth_from_cookie(app, client):
     assert text == 'remember'
     assert policy.cookie_name in response.cookies
 
-    assert_response(cli.get('/auth'), 'auth')
+    await assert_response(cli.get('/auth'), 'auth')
 
 
 @pytest.mark.slow
