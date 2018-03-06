@@ -1,7 +1,7 @@
 import asyncio
 from os import urandom
 import pytest
-from aiohttp import web, ServerDisconnectedError
+from aiohttp import web
 from aiohttp_auth import auth
 import aiohttp_session
 from utils import assert_response
@@ -315,5 +315,5 @@ async def test_middleware_cannot_store_auth_in_cookie_when_response_prepared(
 
     cli = await client(app)
 
-    with pytest.raises(ServerDisconnectedError):
-        await cli.get('/test')
+    with pytest.raises(Exception):
+        await assert_response(cli.get('/test'), 'test')
